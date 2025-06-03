@@ -1,0 +1,901 @@
+[
+    {
+        "id": "55b83d7227d78c46",
+        "type": "tab",
+        "label": "Monitor de Emergência",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "bb07d9f965195f8e",
+        "type": "mqtt in",
+        "z": "55b83d7227d78c46",
+        "name": "Subscriber Status",
+        "topic": "emergency/device/status",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "a8b5a5d0.0a0f38",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 110,
+        "y": 120,
+        "wires": [
+            [
+                "0b65b0b43d66f717",
+                "464aa159efd17f01"
+            ]
+        ]
+    },
+    {
+        "id": "792950c803ec684c",
+        "type": "ui_template",
+        "z": "55b83d7227d78c46",
+        "group": "e2e2e2e2.2e2e2e",
+        "name": "Dispositivos Ativos",
+        "order": 1,
+        "width": 6,
+        "height": 8,
+        "format": "<div style=\"width: 100%; padding: 16px; box-sizing: border-box; background-color: transparent;\">\n  <div\n    style=\"background-color: #42bcf5; color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\">\n    <div\n      style=\"background-color: rgba(0, 0, 0, 0.15); padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.2);\">\n      <h4 style=\"margin: 0; font-size: 1.25rem; color: white !important;\">ALERTAS DE EMERGÊNCIA</h4>\n    </div>\n    <div style=\"padding: 16px; overflow-y: auto; background-color: #42bcf5 !important;\">\n      <div ng-repeat=\"device in msg.payload.devices track by $index\" style=\"margin-bottom: 16px;\">\n        <p style=\"margin: 0 0 4px;\"><strong>Identificador do Dispositivo: </strong>{{device.id || device.deviceId}}</p>\n        <p style=\"margin: 0 0 8px;\"><strong>Status:</strong>\n          <span style=\"color: #ffcc00; font-weight: bold;\">{{device.reason}}</span>\n        </p>\n        <p style=\"margin: 0 0 8px;\">\n          <strong>Latitude:</strong> {{device.latitude | number:4}},\n          <strong>Longitude:</strong> {{device.longitude | number:4}}\n        </p>\n        <p style=\"margin: 0 0 8px;\"><strong>Última atualização:</strong> {{device.timestamp}}</p>\n        <button ng-click=\"localizar(device); $event.stopPropagation();\" style=\"background-color: #fff; color: #42bcf5; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;\">\n          📍 Localizar\n        </button>\n        <hr style=\"border-top: 1px solid rgba(255,255,255,0.3); margin: 12px 0 0;\">\n      </div>\n      <div ng-if=\"!msg.payload.devices || msg.payload.devices.length === 0\"\n        style=\"text-align: center; padding: 20px; color: rgba(255,255,255,0.5) !important;\">\n        Nenhum dispositivo encontrado\n      </div>\n    </div>\n  </div>\n</div>\n\n<script>\n  (function(scope) {\n    scope.$watch('msg', function(msg) {\n    if (msg && msg.payload && msg.payload.devices) {\n    scope.devices = msg.payload.devices || [];\n    } else {\n    scope.devices = scope.msg._ui.node.context().get(\"devices\") || [];\n    }\n    if (!scope.$$phase) scope.$applyAsync();\n    });\n\n    scope.localizar = function(device) {\n      scope.send({\n        payload: {\n          action: \"localizar\",\n          device: device,\n          devices: scope.devices\n        }\n      });\n    };\n  })(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 890,
+        "y": 120,
+        "wires": [
+            [
+                "e2a49041ccec24f1",
+                "c23d4ab855366803"
+            ]
+        ]
+    },
+    {
+        "id": "0b65b0b43d66f717",
+        "type": "function",
+        "z": "55b83d7227d78c46",
+        "name": "Armazenar Dispositivo",
+        "func": "let newDevice = msg.payload;\nlet devices = flow.get(\"devices\") || [];\n\nnewDevice.deviceId = newDevice.deviceId || newDevice.id;\n\n// Usa somente o deviceId como identificador único\nlet index = devices.findIndex(d => d.deviceId === newDevice.deviceId);\n\nif (index !== -1) {\n    // Atualiza dispositivo existente\n    devices[index] = newDevice;\n} else {\n    // Adiciona novo\n    devices.push(newDevice);\n}\n\nflow.set(\"devices\", devices);\n\nmsg.payload = devices;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 120,
+        "wires": [
+            [
+                "7d2b56d7ec99a284"
+            ]
+        ]
+    },
+    {
+        "id": "464aa159efd17f01",
+        "type": "debug",
+        "z": "55b83d7227d78c46",
+        "name": "Debug Status",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 360,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "e2a49041ccec24f1",
+        "type": "switch",
+        "z": "55b83d7227d78c46",
+        "name": "",
+        "property": "payload.action",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "localizar",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1150,
+        "y": 120,
+        "wires": [
+            [
+                "adfc3406b6856584",
+                "445804767f4868ff"
+            ]
+        ]
+    },
+    {
+        "id": "adfc3406b6856584",
+        "type": "function",
+        "z": "55b83d7227d78c46",
+        "name": "Preparar para Mapa",
+        "func": "let latitude = msg.payload.device.latitude;\nlet longitude = msg.payload.device.longitude;\n\nmsg.payload = [\n    {clear: true},\n    {\n        name: msg.payload.device.deviceId,\n        lat: latitude,\n        lon: longitude,\n    }\n];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1440,
+        "y": 120,
+        "wires": [
+            [
+                "914570c3e69ef0c8"
+            ]
+        ]
+    },
+    {
+        "id": "914570c3e69ef0c8",
+        "type": "delay",
+        "z": "55b83d7227d78c46",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "100",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "0.1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1680,
+        "y": 120,
+        "wires": [
+            [
+                "0afd17aefc2f6fe3"
+            ]
+        ]
+    },
+    {
+        "id": "5be71ee83c6d2e21",
+        "type": "debug",
+        "z": "55b83d7227d78c46",
+        "name": "Debug Mapa",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1770,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "878409c7ca498b90",
+        "type": "mqtt out",
+        "z": "55b83d7227d78c46",
+        "name": "Publisher Comandos",
+        "topic": "emergency/device/commands",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "a8b5a5d0.0a0f38",
+        "x": 1660,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "c553ccb1872f1b5d",
+        "type": "debug",
+        "z": "55b83d7227d78c46",
+        "name": "Debug Comandos",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1630,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "7c4d77a3eed95b82",
+        "type": "inject",
+        "z": "55b83d7227d78c46",
+        "name": "Cancelar Alerta",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "CANCEL_ALERT",
+        "payloadType": "str",
+        "x": 1380,
+        "y": 280,
+        "wires": [
+            [
+                "878409c7ca498b90"
+            ]
+        ]
+    },
+    {
+        "id": "bdd42878e40d1c6b",
+        "type": "inject",
+        "z": "55b83d7227d78c46",
+        "name": "Teste Alerta",
+        "props": [
+            {
+                "p": "payload",
+                "v": "TEST_ALERT",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 1360,
+        "y": 400,
+        "wires": [
+            [
+                "878409c7ca498b90"
+            ]
+        ]
+    },
+    {
+        "id": "bb12f986066d4f07",
+        "type": "mqtt in",
+        "z": "55b83d7227d78c46",
+        "name": "Subscrever Alertas",
+        "topic": "emergency/device/alerts",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "a8b5a5d0.0a0f38",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 110,
+        "y": 360,
+        "wires": [
+            [
+                "7bdd8e225fa5a5b3",
+                "95298b77714b0e54",
+                "da57c49744f1b18c"
+            ]
+        ]
+    },
+    {
+        "id": "7bdd8e225fa5a5b3",
+        "type": "debug",
+        "z": "55b83d7227d78c46",
+        "name": "Debug Alertas",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "f86a42d9887fa387",
+        "type": "ui_template",
+        "z": "55b83d7227d78c46",
+        "group": "f8c8a8c4.1a7f18",
+        "name": "Painel de Alertas",
+        "order": 2,
+        "width": 11,
+        "height": 11,
+        "format": "<div style=\"width: 100%; padding: 16px; box-sizing: border-box; background-color: transparent;\">\n  <div\n    style=\"background-color: #1d5d7a; color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\">\n    <div\n      style=\"background-color: rgba(0, 0, 0, 0.15); padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.2);\">\n      <h4 style=\"margin: 0; font-size: 1.25rem; color: white !important;\">ALERTAS DE EMERGÊNCIA</h4>\n    </div>\n    <div style=\"padding: 16px; overflow-y: auto; background-color: #1d5d7a !important;\">\n      <div ng-repeat=\"device in msg.payload.devices track by $index\" style=\"margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.1) !important; border-radius: 4px;\">\n        <p style=\"margin: 0 0 4px;\"><strong>{{device.id || device.deviceId}}</strong></p>\n        <p style=\"margin: 0 0 8px;\"><strong>Status:</strong>\n          <span style=\"color: #e80000; font-weight: bold;\">{{device.reason}}</span>\n        </p>\n        <p style=\"margin: 0 0 8px;\">\n          <strong>Latitude:</strong> {{device.latitude | number:4}},\n          <strong>Longitude:</strong> {{device.longitude | number:4}}\n        </p>\n        <p style=\"margin: 0 0 8px;\"><strong>Última atualização:</strong> {{device.timestamp}}</p>\n      </div>\n      <div ng-if=\"!msg.payload.devices || msg.payload.devices.length === 0\"\n        style=\"text-align: center; padding: 20px; color: rgba(255,255,255,0.5) !important;\">\n        Nenhum dispositivo encontrado\n      </div>\n    </div>\n  </div>\n</div>\n\n<script>\n  (function(scope) {\n    scope.$watch('msg', function(msg) {\n    if (msg && msg.payload && msg.payload.devices) {\n    scope.devices = msg.payload.devices || [];\n    } else {\n    scope.devices = scope.msg._ui.node.context().get(\"devices\") || [];\n    }\n    if (!scope.$$phase) scope.$applyAsync();\n    });\n  })(scope);\n</script>\n\n<!-- scope.$watch('msg', function(msg) {\nif (msg && msg.payload) {\nif (Array.isArray(msg.payload)) {\nscope.msg = { payload: { devices: msg.payload } };\n} else if (msg.payload.devices) {\nscope.msg = msg;\n} else {\nscope.msg = { payload: { devices: [] } };\n}\n} else {\nscope.msg = { payload: { devices: [] } };\n}\nif (!scope.$$phase) scope.$applyAsync();\n}); -->",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 1090,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "da57c49744f1b18c",
+        "type": "change",
+        "z": "55b83d7227d78c46",
+        "name": "Formatar para Worldmap",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"name\":\"Alerta: \" & payload.reason,\"lat\":payload.latitude,\"lon\":payload.longitude,\"device\":payload.deviceId,\"time\":payload.timestamp}",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 510,
+        "y": 420,
+        "wires": [
+            [
+                "3e6b0f69239bdb7f"
+            ]
+        ]
+    },
+    {
+        "id": "95298b77714b0e54",
+        "type": "function",
+        "z": "55b83d7227d78c46",
+        "name": "Armazenar Alertas",
+        "func": "let newDevice = msg.payload;\nlet devices = flow.get(\"devices\") || [];\n\nnewDevice.deviceId = newDevice.deviceId || newDevice.id;\n\n// Usa somente o deviceId como identificador único\nlet index = devices.findIndex(d => d.deviceId === newDevice.deviceId);\n\nif (index !== -1) {\n    // Atualiza dispositivo existente\n    devices[index] = newDevice;\n} else {\n    // Adiciona novo\n    devices.push(newDevice);\n}\n\nflow.set(\"devices\", devices);\n\nmsg.payload = devices;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 360,
+        "wires": [
+            [
+                "0c033563b0e63418"
+            ]
+        ]
+    },
+    {
+        "id": "445804767f4868ff",
+        "type": "debug",
+        "z": "55b83d7227d78c46",
+        "name": "Roberto Carlos",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1440,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "d10be14b73191a21",
+        "type": "inject",
+        "z": "55b83d7227d78c46",
+        "name": "Limpar",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "cleanup",
+        "payload": "{   \"id\": \"cleanup-node-id\",   \"type\": \"inject\",   \"z\": \"5fecfb95df524987\",   \"name\": \"Limpar Dispositivos\",   \"props\": [     {       \"p\": \"payload\",       \"v\": \"{}\",       \"vt\": \"json\"     },     {       \"p\": \"topic\",       \"v\": \"cleanup\",       \"vt\": \"str\"     }   ],   \"repeat\": \"\",   \"crontab\": \"\",   \"once\": false,   \"onceDelay\": 0.1,   \"x\": 120,   \"y\": 240,   \"wires\": [     [\"cleanup-function-id\"]   ] }",
+        "payloadType": "json",
+        "x": 1340,
+        "y": 340,
+        "wires": [
+            [
+                "878409c7ca498b90"
+            ]
+        ]
+    },
+    {
+        "id": "47ac780dda16a2c5",
+        "type": "debug",
+        "z": "55b83d7227d78c46",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "c23d4ab855366803",
+        "type": "debug",
+        "z": "55b83d7227d78c46",
+        "name": "Dados Recebidos",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1130,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "7d2b56d7ec99a284",
+        "type": "function",
+        "z": "55b83d7227d78c46",
+        "name": "Listar Emergências",
+        "func": "// Recupera lista da memória do fluxo\nlet lista = flow.get(\"devices\") || [];\nmsg.payload = lista;\n\nreturn {\n    payload: {\n        devices: lista,\n    }\n};",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 120,
+        "wires": [
+            [
+                "792950c803ec684c"
+            ]
+        ]
+    },
+    {
+        "id": "0c033563b0e63418",
+        "type": "function",
+        "z": "55b83d7227d78c46",
+        "name": "Listar Emergências",
+        "func": "// Recupera lista da memória do fluxo\nlet lista = flow.get(\"devices\") || [];\nmsg.payload = {\n    devices: lista\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 830,
+        "y": 300,
+        "wires": [
+            [
+                "f86a42d9887fa387",
+                "47ac780dda16a2c5"
+            ]
+        ]
+    },
+    {
+        "id": "a215c85b7d233205",
+        "type": "inject",
+        "z": "55b83d7227d78c46",
+        "name": "Recarregar",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 430,
+        "y": 40,
+        "wires": [
+            [
+                "7d2b56d7ec99a284"
+            ]
+        ]
+    },
+    {
+        "id": "cd68e44674306620",
+        "type": "inject",
+        "z": "55b83d7227d78c46",
+        "name": "Recarregar",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 570,
+        "y": 260,
+        "wires": [
+            [
+                "0c033563b0e63418"
+            ]
+        ]
+    },
+    {
+        "id": "3e6b0f69239bdb7f",
+        "type": "worldmap",
+        "z": "55b83d7227d78c46",
+        "name": "Mapa de Alertas",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "OSMG",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "show",
+        "layers": "show",
+        "panit": "false",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "false",
+        "coords": "none",
+        "showgrid": "false",
+        "path": "/worldmap",
+        "overlist": "DR,CO,RA,DN,HM",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriO,EsriDG,NatGeo,UKOS,OpTop",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 820,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "0afd17aefc2f6fe3",
+        "type": "ui_worldmap",
+        "z": "55b83d7227d78c46",
+        "group": "e2e2e2e2.2e2e2e",
+        "order": 3,
+        "width": 10,
+        "height": 6,
+        "name": "Mapa de Dispositivos",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "OSMG",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "hide",
+        "layers": "hide",
+        "panit": "true",
+        "panlock": "true",
+        "zoomlock": "false",
+        "hiderightclick": "true",
+        "coords": "dms",
+        "showgrid": "false",
+        "showruler": "false",
+        "allowFileDrop": "false",
+        "path": "/worldmap",
+        "overlist": "",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriDG,UKOS",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 1920,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "d0fc8ed09ed40dac",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 1,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "bb93bd0aa22c3a94",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 3,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "3770f9552a72fe38",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 4,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "6dcf3574bec6cd4b",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 5,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "9c4b11d2db62d4ea",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 6,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "2c02aeddd7123be1",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 7,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "1ba7aabec4934d0d",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 8,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "5bdb9adccf4b6145",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 9,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "18aa9710c7c4f2e4",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 10,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "0d0132bfb7b697b9",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 11,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "c2c7358960b8bc26",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 12,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "4f324e0126a68d91",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 13,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "5984588695aeeb0e",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 14,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "83bb223b1c8f8d2c",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 15,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "2cb173ca55a48381",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 16,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "0a4f0419b3d3b1f2",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 17,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "cfbdc881372a69bb",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 18,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "72f3e330534c817a",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 19,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "2ea933383dc70f37",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 20,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "dc7ec5de2821458b",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 21,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "87c63ed3dc29028e",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 22,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "98a83ccd98472f4d",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "f8c8a8c4.1a7f18",
+        "order": 23,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "54975c0e64aa773a",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "e2e2e2e2.2e2e2e",
+        "order": 2,
+        "width": 10,
+        "height": 1
+    },
+    {
+        "id": "6bd2af2ded6af759",
+        "type": "ui_spacer",
+        "z": "55b83d7227d78c46",
+        "name": "spacer",
+        "group": "e2e2e2e2.2e2e2e",
+        "order": 4,
+        "width": 10,
+        "height": 1
+    },
+    {
+        "id": "a8b5a5d0.0a0f38",
+        "type": "mqtt-broker",
+        "name": "Broker HiveMQ",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {}
+    },
+    {
+        "id": "e2e2e2e2.2e2e2e",
+        "type": "ui_group",
+        "name": "Monitor de Emergência",
+        "tab": "f4f4f4f4.4f4f4f",
+        "order": 1,
+        "disp": true,
+        "width": 16,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "f8c8a8c4.1a7f18",
+        "type": "ui_group",
+        "name": "Dashboard de Emergência",
+        "tab": "a3c8a8c4.1a7f18",
+        "order": 1,
+        "disp": true,
+        "width": 13,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "f4f4f4f4.4f4f4f",
+        "type": "ui_tab",
+        "name": "Dashboard",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "a3c8a8c4.1a7f18",
+        "type": "ui_tab",
+        "name": "Monitoramento",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
