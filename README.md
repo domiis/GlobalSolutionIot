@@ -1,153 +1,124 @@
-# 🛵Monitoramento Inteligente de Pátio de Motos
-O projeto consiste em um sistema de monitoramento inteligente para pátios de motos da Mottu, permitindo a localização precisa e gestão em tempo real das motos através de tecnologias IoT e visualização em dashboard.
+# 🚨 Sistema de Monitoramento de Emergência com IoT
+O projeto consiste em um sistema de monitoramento de emergência que utiliza dispositivos IoT para enviar alertas com localização em tempo real, visualizados através de um dashboard centralizado.
 
-# Integrantes
+## 👥 Integrantes
 * Celso Canaveze Teixeira Pinto - RM556118
 
 * Sofia Domingues Gonçalves - RM554920
 
 * Thiago Moreno Matheus - RM554507
 
-## 📲 Visão Geral — Projeto de Monitoramento de Motos via ESP32
-* Cada moto possui um identificador único (ID), placa e modelo, enviados automaticamente via IoT (simulados no código).
+## 📱 Visão Geral - Sistema de Emergência via ESP32
+* Cada dispositivo de emergência possui um identificador único (ID) e envia sua localização via IoT
 
-* Um ESP32 simula a recepção dos dados da moto (placa, modelo, status e localização).
+* Um ESP32 simula o dispositivo de emergência com botão de alerta
 
-* O sistema cruza esses dados com os comandos recebidos via broker MQTT (tópico mottu/patio/comandos).
+* O sistema publica alertas no tópico MQTT emergency/device/alerts
 
-* A informação da moto é publicada periodicamente no tópico MQTT mottu/patio/motos.
-
-* Um dashboard Node-RED ou outro serviço MQTT pode visualizar o status, localização e dados da moto em tempo real.
+* Um dashboard Node-RED visualiza os alertas em tempo real com mapa interativo
 
 ## 🧠 Lógica do Projeto
-* O ESP32 não faz leitura física da placa ou presença — os dados da moto são simulados e recebidos via rede/MQTT.
+* O ESP32 simula um dispositivo de emergência com:
 
-* Ao receber comandos via MQTT (ex: PRONTA_PARA_ALUGAR, EM_MANUTENCAO, ALERTA), o ESP32:
+    * Botão para acionar alertas
 
-    1. Atualiza o status interno da moto.
+    * Geração de coordenadas aleatórias no Brasil
 
-    2. Atualiza o LED RGB, indicando o status visualmente:
+    * Conexão WiFi e MQTT
 
-        * 🟢 Verde: PRONTA_PARA_ALUGAR
+* Quando o botão é pressionado:
 
-        * 🟡 Amarelo: PENDENTE_REGULARIZACAO
+    1. Gera um novo ID de dispositivo e localização
 
-        * 🔴 Vermelho: EM_MANUTENCAO
+    2. Publica alerta no tópico MQTT com:
 
-3. Aciona o buzzer com sons distintos para cada status.
+        * ID do dispositivo
 
-4. Publica os dados atualizados da moto (incluindo posição aleatória simulada) no tópico mottu/patio/motos.
+        * Motivo do alerta
 
-## 🔘 Interação Local (Botão Físico)
-Um botão conectado ao ESP32 permite ciclar entre os três estados da moto manualmente.
+        * Coordenadas geográficas
 
-A cada clique:
+        * Timestamp
 
-* O status é alterado em sequência.
+    3. Fornece feedback visual com LED
 
-* O LED e o buzzer reagem ao novo estado.
+## 🔘 Interação Local
+* Botão físico no ESP32:
 
-* Os dados são publicados automaticamente no broker MQTT.
+    * Ao ser pressionado, dispara um alerta de emergência
 
-## 🏷️ Exemplo de Status Cadastrados
-* PRONTA_PARA_ALUGAR – Moto autorizada a sair do pátio
+    * Gera novas coordenadas para simular movimento
 
-* EM_MANUTENCAO – Moto em manutenção, bloqueada
+    * Fornece feedback visual com LED piscando
 
-* PENDENTE_REGULARIZACAO – Cadastro pendente ou precisa de análise
+## 🚨 Tipos de Alertas
+* Todos os alertas são do tipo "Botão de emergência pressionado"
+
+* O sistema pode ser expandido para diferentes tipos de emergência
 
 ## 🔌 Componentes Usados
 * ESP32 (simulado no Wokwi)
 
-* LED RGB para indicar status da moto:
+* LED para feedback visual (pino 2)
 
-    * Verde (LED_GREEN): Pronta para alugar
-
-    * Amarelo (LED_YELLOW): Pendente
-
-    * Vermelho (LED_RED): Em manutenção
-
-* Buzzer: Alerta sonoro conforme o status da moto
-
-* Botão físico: Altera o status manualmente (ciclo entre os 3 status)
+* Botão físico para acionar alertas (pino 5)
 
 * Conexão Wi-Fi
 
 * Broker MQTT público: broker.hivemq.com
 
-* Node-RED: Dashboard para visualização interativa
+* Node-RED para dashboard de monitoramento
 
- ## 📡 Tópico MQTT Utilizado
-* Publicação: mottu/patio/motos → Moto envia status e localização
+## 📡 Tópicos MQTT Utilizados
+* emergency/device/alerts - Para publicação de alertas de emergência
 
-* Comando: mottu/patio/comandos → Recebe comandos para alterar o status
+* emergency/device/status - Para publicação do status dos dispositivos
 
-## 📤 Fluxo da Informação
-1. Moto (simulada) → Envia placa e status para o ESP32
+* emergency/device/commands - Para receber comandos (não implementado no dispositivo)
 
-2. ESP32 → Processa e atualiza status, acionando LEDs e buzzer
+## 📊 Dashboard Node-RED
+O dashboard inclui:
 
-3. Publica via MQTT → Envia informações para o Broker MQTT
+* Lista de dispositivos ativos com:
 
-4. Node-RED → Exibe o status no painel de controle
+    * ID do dispositivo
 
-## 🧪 Simulação de Placas
-* A leitura da placa é simulada com seleção aleatória no código
+    * Status/motivo do alerta
 
-* Em um cenário real, as placas seriam enviadas via módulo RFID ou dispositivo IoT conectado à moto
+    * Coordenadas geográficas
 
-* A cada 10 segundos, o ESP32 simula a chegada de uma nova moto, publicando a localização e status
+    * Timestamp da última atualização
 
-## 🖥️ Visualização com Node-RED
-* Tópico monitorado: mottu/patio/motos
+* Mapa interativo com localização dos dispositivos
 
-* Dashboard exibe:
+* Botão "Localizar" para centralizar o mapa no dispositivo selecionada
 
-    * Lista por status (Pronta para alugar, Manutenção, Pendente)
-
-    * Mapa interativo com localização das motos
-
-    * Botão "Localizar" para centralizar o mapa na moto selecionada
-
-    * Atualização em tempo real dos status e localizações
-
-## 🚦 Comportamento dos LEDs e Buzzer
-* LED verde (🟢): Moto PRONTA_PARA_ALUGAR
-
-* LED amarelo (🟡): Moto PENDENTE_REGULARIZACAO
-
-* LED vermelho (🔴): Moto EM_MANUTENCAO
-
-* Buzzer: Emite sons diferentes conforme o status da moto
-
-## 📋 Exemplo de Saída Serial
-
-    Copiar
-    Editar
-    [INFO] Sistema iniciado - Moto IoT  
-    Wi-Fi conectado!  
-    Endereço IP: 192.168.0.105  
-    Moto recebida: ID 102 - JLM3F45 - Modelo CG160  
-    Status atual: EM_MANUTENCAO  
-    [MQTT] Publicado em mottu/patio/motos  
-    [ALERTA] LED vermelho ativado | Som de erro  
+* Atualização em tempo real dos status e localizações
 
 ## 🛠️ Tecnologias Utilizadas
 * Hardware (simulado):
 
     * ESP32
 
-    * LED RGB para status (pinos 2, 4)
+    * LED (pino 2)
 
-    *  Buzzer (pino 5)
-
-    * Botão (pino 6) para alterar manualmente o status
+    * Botão (pino 5)
 
 * Software:
 
     * Wokwi Simulator para simulação do ESP32
 
-    * MQTT para comunicação entre os dispositivos
+    * Protocolo MQTT para comunicação
 
-    * MQTT para comunicação entre os dispositivos
-    Node-RED para visualização no dashboard
+    * Node-RED para dashboard de monitoramento
+
+    * Worldmap no Node-RED para visualização geográfica
+
+## 📋 Exemplo de Saída Serial
+    [INFO] Sistema iniciado - Dispositivo de Emergência  
+    Wi-Fi conectado!  
+    Endereço IP: 192.168.0.105  
+    Novo dispositivo gerado: ID device-abc123-1  
+    Coordenadas: -23.5505, -46.6333  
+    [MQTT] Alerta publicado em emergency/device/alerts  
+    [ALERTA] LED piscando 3 vezes  
