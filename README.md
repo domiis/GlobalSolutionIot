@@ -9,7 +9,7 @@ O projeto consiste em um sistema de monitoramento de emergência que utiliza dis
 * Thiago Moreno Matheus - RM554507
 
 ## 📱 Visão Geral - Sistema de Emergência via ESP32
-* Cada dispositivo de emergência possui um identificador único (ID) e envia sua localização via IoT
+* Cada dispositivo de emergência possui um identificador que envia sua localização via IoT
 
 * Um ESP32 simula o dispositivo de emergência com botão de alerta
 
@@ -34,8 +34,6 @@ O projeto consiste em um sistema de monitoramento de emergência que utiliza dis
 
         * ID do dispositivo
 
-        * Motivo do alerta
-
         * Coordenadas geográficas
 
         * Timestamp
@@ -47,7 +45,7 @@ O projeto consiste em um sistema de monitoramento de emergência que utiliza dis
 
     * Ao ser pressionado, dispara um alerta de emergência
 
-    * Gera novas coordenadas para simular movimento
+    * Gera novas coordenadas
 
     * Fornece feedback visual com LED piscando
 
@@ -57,11 +55,11 @@ O projeto consiste em um sistema de monitoramento de emergência que utiliza dis
 * O sistema pode ser expandido para diferentes tipos de emergência
 
 ## 🔌 Componentes Usados
-* ESP32 (simulado no Wokwi)
+* ESP32
 
-* LED para feedback visual (pino 2)
+* LED para feedback visual
 
-* Botão físico para acionar alertas (pino 5)
+* Botão físico para acionar alertas
 
 * Conexão Wi-Fi
 
@@ -83,7 +81,7 @@ O dashboard inclui:
 
     * ID do dispositivo
 
-    * Status/motivo do alerta
+    * Status
 
     * Coordenadas geográficas
 
@@ -100,9 +98,9 @@ O dashboard inclui:
 
     * ESP32
 
-    * LED (pino 2)
+    * LED
 
-    * Botão (pino 5)
+    * Botão
 
 * Software:
 
